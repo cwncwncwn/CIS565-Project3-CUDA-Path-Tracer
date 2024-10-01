@@ -71,3 +71,26 @@ __host__ __device__ float sphereIntersectionTest(
     glm::vec3& intersectionPoint,
     glm::vec3& normal,
     bool& outside);
+
+
+__host__ __device__ float customMeshIntersectionTest(
+    Geom mesh,
+    Ray r,
+    glm::vec3& intersectionPoint,
+    glm::vec3& normal,
+    int vertex_size,
+    Vertex* vertices,
+    int custom_mesh_size,
+    Custom_Mesh* custom_meshes,
+    bool& outside);
+
+__host__ __device__ glm::vec3 baryCentric_interpolation(
+    const glm::vec3& p0,
+    const glm::vec3& p1,
+    const glm::vec3& p2,
+    const glm::vec3& p);
+
+__host__ __device__ float triangle_area(
+    const glm::vec3& p0,
+    const glm::vec3& p1,
+    const glm::vec3& p2);

@@ -111,3 +111,94 @@ __host__ __device__ float sphereIntersectionTest(
 
     return glm::length(r.origin - intersectionPoint);
 }
+
+__host__ __device__ float customMeshIntersectionTest(
+    Geom mesh,
+    Ray r,
+    glm::vec3& intersectionPoint,
+    glm::vec3& normal,
+    int vertex_size,
+    Vertex* vertices,
+    int custom_mesh_size,
+    Custom_Mesh* custom_meshes,
+    bool& outside)
+{
+    // from the big lists:  
+    //      get current mesh's vertices (treat multiple obj parts in an obj file as one mesh here)
+    // for each triangle:
+    //      test intersect. 
+    //          If not, return -1
+    //          If intersected, determine inside/outside based on cos(dir, normal), return t
+    float t_final = -1;
+    int t_v_idx = -1;
+    for (int mesh_idx = mesh.custom_mesh_idx.x; mesh_idx <= mesh.custom_mesh_idx.y; mesh_idx++) {
+        glm::vec2 vertex_indices = custom_meshes[mesh_idx].vertex_indices;
+        for (int vertex_idx = vertex_indices.x; vertex_idx <= vertex_indices.y; vertex_idx += 3) {
+
+            // M?ller¨CTrumbore intersection
+            glm::vec3 p0 = vertices[vertex_idx].pos;
+            glm::vec3 p1 = vertices[vertex_idx + 1].pos;
+            glm::vec3 p2 = vertices[vertex_idx + 2].pos;
+
+            glm::vec3 edge1 = p1 - p0;
+            glm::vec3 edge2 = p2 - p0;
+            glm::vec3 ray_cross_e2 = cross(r.direction, edge2);
+            float det = dot(edge1, ray_cross_e2);
+
+            if (det > -EPSILON && det < EPSILON) continue;
+
+            float inv_det = 1.0 / det;
+            glm::vec3 s = r.origin - p0;
+            float u = inv_det * dot(s, ray_cross_e2);
+
+            if (u < 0 || u > 1) continue;
+
+            glm::vec3 s_cross_e1 = cross(s, edge1);
+            float v = inv_det * dot(r.direction, s_cross_e1);
+
+            if (v < 0 || u + v > 1) continue;
+
+            float t = inv_det * dot(edge2, s_cross_e1);
+            if (t > EPSILON) {
+                if (t_final > t || t_final == -1) {
+                    t_final = t;
+                    t_v_idx = vertex_idx;
+                }
+            }
+        }
+    }
+    if (t_final < 0) {
+        return -1;
+    }
+
+    // compute intersection
+    intersectionPoint = r.origin + t_final * r.direction;
+    glm::vec3 baryCentric_factor = baryCentric_interpolation(
+        vertices[t_v_idx].pos,
+        vertices[t_v_idx + 1].pos,
+        vertices[t_v_idx + 2].pos,
+        intersectionPoint);
+
+    // compute normal
+    normal = 
+        vertices[t_v_idx].normal * baryCentric_factor.x +
+        vertices[t_v_idx + 1].normal * baryCentric_factor.y +
+        vertices[t_v_idx + 2].normal * baryCentric_factor.z;
+
+    // evaluate inside or outside
+    outside = dot(normalize(normal), normalize(r.direction)) <= 0.f;
+
+    return t_final;
+}
+
+__host__ __device__ glm::vec3 baryCentric_interpolation(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec3& p) {
+    float S = triangle_area(p1, p2, p3);
+    float S1 = triangle_area(p, p2, p3);
+    float S2 = triangle_area(p, p3, p1);
+    float S3 = triangle_area(p, p1, p2);
+    return glm::vec3(S1 / S, S2 / S, S3 / S);
+}
+
+__host__ __device__ float triangle_area(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2) {
+    return 0.5 * glm::length(glm::cross(p2 - p1, p0 - p1));
+}
