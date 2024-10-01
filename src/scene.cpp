@@ -130,6 +130,22 @@ void Scene::loadFromJSON(const std::string& jsonName)
             auto& attrib = reader.GetAttrib();
             auto& shapes = reader.GetShapes();
             auto& materials = reader.GetMaterials();
+            
+            for (int materialIdx = 0; materialIdx < materials.size(); materialIdx++) {
+                Material newMaterial;
+
+                std::string textName = materials[materialIdx].diffuse_texname;                
+                if (!textName.empty()) {
+                    std::string texturePath = jsonName.substr(0, pos + 1) + "Mesh/" + "Textures/" + textName;
+                    int imgWidth, imgHeight, channels;
+                    unsigned char* imgData = stbi_load(texturePath.c_str(), &imgWidth, &imgHeight, &channels, 0);
+                    if (imgData == nullptr) {
+                        std::cerr << "Failed to load texture: " << texturePath << std::endl;
+                    }
+
+                }
+
+            }
 
             // for each shape:
             //  record index of the mesh in geoms
@@ -156,6 +172,15 @@ void Scene::loadFromJSON(const std::string& jsonName)
                     this->vertices.push_back(v);
                 }
                 newGeom.vertex_indices.y = this->vertices.size() - 1;
+
+                // new material for geoms
+                bool useExtMat = p["EXTERNAL_MATERIAL"];
+                if (useExtMat) {
+
+                }
+                else {
+
+                }
 
                 newGeom.materialid = MatNameToID[p["MATERIAL"]];
                 const auto& trans = p["TRANS"];

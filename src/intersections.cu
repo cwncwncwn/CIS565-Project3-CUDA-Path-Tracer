@@ -127,6 +127,10 @@ __host__ __device__ float customMeshIntersectionTest(
     //      test intersect. 
     //          If not, return -1
     //          If intersected, determine inside/outside based on cos(dir, normal), return t
+    Ray q;
+    q.origin = multiplyMV(mesh.inverseTransform, glm::vec4(r.origin, 1.0f));
+    q.direction = glm::normalize(multiplyMV(mesh.inverseTransform, glm::vec4(r.direction, 0.0f)));
+
     float t_final = -1;
     int t_v_idx = -1;
     glm::vec2 vertex_indices = mesh.vertex_indices;
@@ -139,19 +143,19 @@ __host__ __device__ float customMeshIntersectionTest(
 
         glm::vec3 edge1 = p1 - p0;
         glm::vec3 edge2 = p2 - p0;
-        glm::vec3 ray_cross_e2 = cross(r.direction, edge2);
+        glm::vec3 ray_cross_e2 = cross(q.direction, edge2);
         float det = dot(edge1, ray_cross_e2);
 
         if (det > -EPSILON && det < EPSILON) continue;
 
         float inv_det = 1.0 / det;
-        glm::vec3 s = r.origin - p0;
+        glm::vec3 s = q.origin - p0;
         float u = inv_det * dot(s, ray_cross_e2);
 
         if (u < 0 || u > 1) continue;
 
         glm::vec3 s_cross_e1 = cross(s, edge1);
-        float v = inv_det * dot(r.direction, s_cross_e1);
+        float v = inv_det * dot(q.direction, s_cross_e1);
 
         if (v < 0 || u + v > 1) continue;
 
@@ -168,7 +172,7 @@ __host__ __device__ float customMeshIntersectionTest(
     }
 
     // compute intersection
-    intersectionPoint = r.origin + t_final * r.direction;
+    intersectionPoint = q.origin + t_final * q.direction;
     glm::vec3 baryCentric_factor = baryCentric_interpolation(
         vertices[t_v_idx].pos,
         vertices[t_v_idx + 1].pos,
@@ -182,7 +186,10 @@ __host__ __device__ float customMeshIntersectionTest(
         vertices[t_v_idx + 2].normal * baryCentric_factor.z;
 
     // evaluate inside or outside
-    outside = dot(normalize(normal), normalize(r.direction)) <= 0.f;
+    outside = dot(normalize(normal), normalize(q.direction)) <= 0.f;
+
+    intersectionPoint = multiplyMV(mesh.transform, glm::vec4(intersectionPoint, 1.f));
+    normal = glm::normalize(multiplyMV(mesh.transform, glm::vec4(normal, 0.f)));
 
     return t_final;
 }

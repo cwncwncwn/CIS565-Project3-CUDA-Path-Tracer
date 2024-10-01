@@ -41,6 +41,13 @@ struct Geom
     glm::mat4 invTranspose;
 };
 
+struct Texture {
+    int width;
+    int height;
+    int channel;
+    unsigned char* imgData;
+};
+
 struct Material
 {
     glm::vec3 color;
@@ -53,6 +60,8 @@ struct Material
     float hasRefractive;
     float indexOfRefraction;
     float emittance;
+    float hasTexture;
+    int baseColorTextIdx;
 };
 
 struct Camera

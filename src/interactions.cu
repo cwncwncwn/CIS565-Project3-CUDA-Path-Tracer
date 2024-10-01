@@ -98,18 +98,10 @@ __host__ __device__ void scatterRay(
             if (outside) {
                 eta = 1.0 / m.indexOfRefraction;
             }
-            glm::vec3 refracted;
-            bool isRefrcted = refract(currDir, n, eta, refracted);
-
-            if (!isRefrcted) {
-                newDirection = glm::vec3(0.0);
-                pathSegment.color *= glm::vec3(0.0);
-            }
-            else {
-                newDirection = normalize(refracted);
-                pathSegment.ray.origin = intersect - 0.01f * newDirection;
-                pathSegment.color *= m.color;
-            }
+            glm::vec3 refracted = glm::refract(currDir, n, eta);
+            newDirection = normalize(refracted);
+            pathSegment.ray.origin = intersect + 0.01f * newDirection;
+            pathSegment.color *= m.color;
         }
         
     }

@@ -32,7 +32,7 @@
         },
         "transmissive_white": {
             "TYPE": "Transmissive",
-            "RGB": [ 0.98, 0.98, 0.98 ]
+            "RGB": [ 0.98, 0.98, 0.88 ]
         }
     },
     "Camera":
@@ -93,16 +93,9 @@
         {
             "TYPE": "sphere",
             "MATERIAL": "transmissive_white",
-            "TRANS": [ -1.0, 3.0, -1.0 ],
+            "TRANS": [ 0.0, 3.0, 0.0 ],
             "ROTAT": [ 0.0, 0.0, 0.0 ],
             "SCALE": [ 5.0, 5.0, 5.0 ]
-        },
-        {
-            "TYPE": "sphere",
-            "MATERIAL": "transmissive_white",
-            "TRANS": [ 2.0, 5.0, 2.0 ],
-            "ROTAT": [ 0.0, 0.0, 0.0 ],
-            "SCALE": [ 4.0, 4.0, 4.0 ]
         }
     ]
 }
