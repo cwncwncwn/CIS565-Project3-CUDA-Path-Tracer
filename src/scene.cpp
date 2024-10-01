@@ -70,18 +70,49 @@ void Scene::loadFromJSON(const std::string& jsonName)
     for (const auto& p : objectsData)
     {
         const auto& type = p["TYPE"];
-        Geom newGeom;
-        newGeom.custom_mesh_idx = glm::vec2(-1.0);
+
         if (type == "cube")
         {
+            Geom newGeom;
+
             newGeom.type = CUBE;
+
+            newGeom.materialid = MatNameToID[p["MATERIAL"]];
+            const auto& trans = p["TRANS"];
+            const auto& rotat = p["ROTAT"];
+            const auto& scale = p["SCALE"];
+            newGeom.translation = glm::vec3(trans[0], trans[1], trans[2]);
+            newGeom.rotation = glm::vec3(rotat[0], rotat[1], rotat[2]);
+            newGeom.scale = glm::vec3(scale[0], scale[1], scale[2]);
+            newGeom.transform = utilityCore::buildTransformationMatrix(
+                newGeom.translation, newGeom.rotation, newGeom.scale);
+            newGeom.inverseTransform = glm::inverse(newGeom.transform);
+            newGeom.invTranspose = glm::inverseTranspose(newGeom.transform);
+
+            geoms.push_back(newGeom);
         }
         else if (type == "sphere")
         {
+            Geom newGeom;
+
             newGeom.type = SPHERE;
+
+            newGeom.materialid = MatNameToID[p["MATERIAL"]];
+            const auto& trans = p["TRANS"];
+            const auto& rotat = p["ROTAT"];
+            const auto& scale = p["SCALE"];
+            newGeom.translation = glm::vec3(trans[0], trans[1], trans[2]);
+            newGeom.rotation = glm::vec3(rotat[0], rotat[1], rotat[2]);
+            newGeom.scale = glm::vec3(scale[0], scale[1], scale[2]);
+            newGeom.transform = utilityCore::buildTransformationMatrix(
+                newGeom.translation, newGeom.rotation, newGeom.scale);
+            newGeom.inverseTransform = glm::inverse(newGeom.transform);
+            newGeom.invTranspose = glm::inverseTranspose(newGeom.transform);
+
+            geoms.push_back(newGeom);
         }
-        else {
-            newGeom.type = CUSTOM;
+        else if (type == "custom") 
+        {
             tinyobj::ObjReaderConfig reader_config;
             tinyobj::ObjReader reader;
 
@@ -98,19 +129,20 @@ void Scene::loadFromJSON(const std::string& jsonName)
             // Get object data
             auto& attrib = reader.GetAttrib();
             auto& shapes = reader.GetShapes();
-            auto& uv = reader.GetMaterials();
+            auto& materials = reader.GetMaterials();
 
             // for each shape:
             //  record index of the mesh in geoms
             //  for each index:
             //      push back each vertex based on its index (record pos, nor, uv)
-            newGeom.custom_mesh_idx.x = this->custom_meshes.size();
             for (int shapeIdx = 0; shapeIdx < shapes.size(); shapeIdx++) {
                 // record mesh index in geoms                
                 // record vertices
-                Custom_Mesh custom_mesh;
+                Geom newGeom;
+                newGeom.type = CUSTOM;
+
                 auto& currMesh = shapes[shapeIdx].mesh;
-                custom_mesh.vertex_indices.x = this->vertices.size();
+                newGeom.vertex_indices.x = this->vertices.size();
 
                 for (size_t idx = 0; idx < currMesh.indices.size(); idx++) {
                     Vertex v;
@@ -123,27 +155,23 @@ void Scene::loadFromJSON(const std::string& jsonName)
                     }
                     this->vertices.push_back(v);
                 }
-                custom_mesh.vertex_indices.y = this->vertices.size() - 1;
-                custom_mesh.mesh_indices.x = this->geoms.size();
-                custom_mesh.mesh_indices.y = shapeIdx;
-                this->custom_meshes.push_back(custom_mesh);
+                newGeom.vertex_indices.y = this->vertices.size() - 1;
+
+                newGeom.materialid = MatNameToID[p["MATERIAL"]];
+                const auto& trans = p["TRANS"];
+                const auto& rotat = p["ROTAT"];
+                const auto& scale = p["SCALE"];
+                newGeom.translation = glm::vec3(trans[0], trans[1], trans[2]);
+                newGeom.rotation = glm::vec3(rotat[0], rotat[1], rotat[2]);
+                newGeom.scale = glm::vec3(scale[0], scale[1], scale[2]);
+                newGeom.transform = utilityCore::buildTransformationMatrix(
+                    newGeom.translation, newGeom.rotation, newGeom.scale);
+                newGeom.inverseTransform = glm::inverse(newGeom.transform);
+                newGeom.invTranspose = glm::inverseTranspose(newGeom.transform);
+
+                geoms.push_back(newGeom);
             }
-            newGeom.custom_mesh_idx.y = this->custom_meshes.size() - 1;
         }
-
-        newGeom.materialid = MatNameToID[p["MATERIAL"]];
-        const auto& trans = p["TRANS"];
-        const auto& rotat = p["ROTAT"];
-        const auto& scale = p["SCALE"];
-        newGeom.translation = glm::vec3(trans[0], trans[1], trans[2]);
-        newGeom.rotation = glm::vec3(rotat[0], rotat[1], rotat[2]);
-        newGeom.scale = glm::vec3(scale[0], scale[1], scale[2]);
-        newGeom.transform = utilityCore::buildTransformationMatrix(
-            newGeom.translation, newGeom.rotation, newGeom.scale);
-        newGeom.inverseTransform = glm::inverse(newGeom.transform);
-        newGeom.invTranspose = glm::inverseTranspose(newGeom.transform);
-
-        geoms.push_back(newGeom);
     }
     const auto& cameraData = data["Camera"];
     Camera& camera = state.camera;

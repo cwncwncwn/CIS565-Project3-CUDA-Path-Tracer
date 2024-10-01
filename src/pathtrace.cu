@@ -83,7 +83,6 @@ static ShadeableIntersection* dev_intersections = NULL;
 // TODO: static variables for device memory, any extra info you need, etc
 // ...
 static Vertex* dev_vertices = NULL;
-static Custom_Mesh* dev_custom_meshes = NULL;
 
 void InitDataContainer(GuiDataContainer* imGuiData)
 {
@@ -116,9 +115,6 @@ void pathtraceInit(Scene* scene)
     cudaMalloc(&dev_vertices, scene->vertices.size() * sizeof(Vertex));
     cudaMemcpy(dev_vertices, scene->vertices.data(), scene->vertices.size() * sizeof(Vertex), cudaMemcpyHostToDevice);
 
-    cudaMalloc(&dev_custom_meshes, scene->custom_meshes.size() * sizeof(Custom_Mesh));
-    cudaMemcpy(dev_custom_meshes, scene->custom_meshes.data(), scene->custom_meshes.size() * sizeof(Custom_Mesh), cudaMemcpyHostToDevice);
-
     checkCUDAError("pathtraceInit");
 }
 
@@ -131,7 +127,6 @@ void pathtraceFree()
     cudaFree(dev_intersections);
     // TODO: clean up any extra device memory you created
     cudaFree(dev_vertices);
-    cudaFree(dev_custom_meshes);
     checkCUDAError("pathtraceFree");
 }
 
@@ -178,9 +173,7 @@ __global__ void computeIntersections(
     int geoms_size,
     ShadeableIntersection* intersections,
     int vertex_size,
-    Vertex* vertices,
-    int custom_mesh_size,
-    Custom_Mesh* custom_meshes
+    Vertex* vertices
     )
 {
     int path_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -216,7 +209,7 @@ __global__ void computeIntersections(
             // TODO: add more intersection tests here... triangle? metaball? CSG?
             else if (geom.type == CUSTOM) 
             {
-                t = customMeshIntersectionTest(geom, pathSegment.ray, tmp_intersect, tmp_normal, vertex_size, vertices, custom_mesh_size, custom_meshes, outside);
+                t = customMeshIntersectionTest(geom, pathSegment.ray, tmp_intersect, tmp_normal, vertex_size, vertices, outside);
             }
             // Compute the minimum t from the intersection tests to determine what
             // scene geometry object was hit first.
@@ -431,7 +424,6 @@ void pathtrace(uchar4* pbo, int frame, int iter)
     checkCUDAError("generate camera ray");
 
     int vertex_size = hst_scene->vertices.size();
-    int custom_mesh_size = hst_scene->custom_meshes.size();
     int depth = 0;
     PathSegment* dev_path_end = dev_paths + pixelcount;
     int num_paths = dev_path_end - dev_paths;
@@ -456,9 +448,7 @@ void pathtrace(uchar4* pbo, int frame, int iter)
             hst_scene->geoms.size(),
             dev_intersections,
             vertex_size,
-            dev_vertices,
-            custom_mesh_size,
-            dev_custom_meshes
+            dev_vertices
             );
         checkCUDAError("trace one bounce");
         cudaDeviceSynchronize();

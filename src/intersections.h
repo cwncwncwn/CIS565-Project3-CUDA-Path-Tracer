@@ -80,8 +80,6 @@ __host__ __device__ float customMeshIntersectionTest(
     glm::vec3& normal,
     int vertex_size,
     Vertex* vertices,
-    int custom_mesh_size,
-    Custom_Mesh* custom_meshes,
     bool& outside);
 
 __host__ __device__ glm::vec3 baryCentric_interpolation(

@@ -21,7 +21,6 @@ public:
 
     std::vector<Geom> geoms;
     std::vector<Material> materials;
-    std::vector<Custom_Mesh> custom_meshes;
     std::vector<Vertex> vertices;
     RenderState state;
 };

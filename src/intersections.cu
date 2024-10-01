@@ -1,4 +1,4 @@
-#include "intersections.h"
+﻿#include "intersections.h"
 
 __host__ __device__ float boxIntersectionTest(
     Geom box,
@@ -119,8 +119,6 @@ __host__ __device__ float customMeshIntersectionTest(
     glm::vec3& normal,
     int vertex_size,
     Vertex* vertices,
-    int custom_mesh_size,
-    Custom_Mesh* custom_meshes,
     bool& outside)
 {
     // from the big lists:  
@@ -131,39 +129,37 @@ __host__ __device__ float customMeshIntersectionTest(
     //          If intersected, determine inside/outside based on cos(dir, normal), return t
     float t_final = -1;
     int t_v_idx = -1;
-    for (int mesh_idx = mesh.custom_mesh_idx.x; mesh_idx <= mesh.custom_mesh_idx.y; mesh_idx++) {
-        glm::vec2 vertex_indices = custom_meshes[mesh_idx].vertex_indices;
-        for (int vertex_idx = vertex_indices.x; vertex_idx <= vertex_indices.y; vertex_idx += 3) {
+    glm::vec2 vertex_indices = mesh.vertex_indices;
+    for (int vertex_idx = vertex_indices.x; vertex_idx <= vertex_indices.y; vertex_idx += 3) {
 
-            // M?ller�CTrumbore intersection
-            glm::vec3 p0 = vertices[vertex_idx].pos;
-            glm::vec3 p1 = vertices[vertex_idx + 1].pos;
-            glm::vec3 p2 = vertices[vertex_idx + 2].pos;
+        // Möller–Trumbore intersection
+        glm::vec3 p0 = vertices[vertex_idx].pos;
+        glm::vec3 p1 = vertices[vertex_idx + 1].pos;
+        glm::vec3 p2 = vertices[vertex_idx + 2].pos;
 
-            glm::vec3 edge1 = p1 - p0;
-            glm::vec3 edge2 = p2 - p0;
-            glm::vec3 ray_cross_e2 = cross(r.direction, edge2);
-            float det = dot(edge1, ray_cross_e2);
+        glm::vec3 edge1 = p1 - p0;
+        glm::vec3 edge2 = p2 - p0;
+        glm::vec3 ray_cross_e2 = cross(r.direction, edge2);
+        float det = dot(edge1, ray_cross_e2);
 
-            if (det > -EPSILON && det < EPSILON) continue;
+        if (det > -EPSILON && det < EPSILON) continue;
 
-            float inv_det = 1.0 / det;
-            glm::vec3 s = r.origin - p0;
-            float u = inv_det * dot(s, ray_cross_e2);
+        float inv_det = 1.0 / det;
+        glm::vec3 s = r.origin - p0;
+        float u = inv_det * dot(s, ray_cross_e2);
 
-            if (u < 0 || u > 1) continue;
+        if (u < 0 || u > 1) continue;
 
-            glm::vec3 s_cross_e1 = cross(s, edge1);
-            float v = inv_det * dot(r.direction, s_cross_e1);
+        glm::vec3 s_cross_e1 = cross(s, edge1);
+        float v = inv_det * dot(r.direction, s_cross_e1);
 
-            if (v < 0 || u + v > 1) continue;
+        if (v < 0 || u + v > 1) continue;
 
-            float t = inv_det * dot(edge2, s_cross_e1);
-            if (t > EPSILON) {
-                if (t_final > t || t_final == -1) {
-                    t_final = t;
-                    t_v_idx = vertex_idx;
-                }
+        float t = inv_det * dot(edge2, s_cross_e1);
+        if (t > EPSILON) {
+            if (t_final > t || t_final == -1) {
+                t_final = t;
+                t_v_idx = vertex_idx;
             }
         }
     }

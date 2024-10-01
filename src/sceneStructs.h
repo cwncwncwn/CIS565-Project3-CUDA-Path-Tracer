@@ -14,13 +14,6 @@ enum GeomType
     CUSTOM
 };
 
-struct Custom_Mesh {
-    // {start_idx, end_idx} in overall scene vertices
-    glm::vec2 vertex_indices;
-    // {mesh_idx_amoung_all_geoms, part_idx_in_this_obj}
-    glm::vec2 mesh_indices;
-};
-
 struct Vertex {
     glm::vec3 pos;
     glm::vec2 uv;
@@ -37,8 +30,9 @@ struct Geom
 {
     enum GeomType type;
     int materialid;
+    // {start_idx, end_idx} in overall scene vertices
+    glm::vec2 vertex_indices;
     // {startIdx_in_all_cmeshes, endIdx}
-    glm::vec2 custom_mesh_idx;
     glm::vec3 translation;
     glm::vec3 rotation;
     glm::vec3 scale;
