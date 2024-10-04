@@ -83,6 +83,8 @@ static ShadeableIntersection* dev_intersections = NULL;
 // TODO: static variables for device memory, any extra info you need, etc
 // ...
 static Vertex* dev_vertices = NULL;
+static Texture* dev_textures = NULL;
+static std::vector<Texture> tmp_textures;
 
 void InitDataContainer(GuiDataContainer* imGuiData)
 {
@@ -115,6 +117,17 @@ void pathtraceInit(Scene* scene)
     cudaMalloc(&dev_vertices, scene->vertices.size() * sizeof(Vertex));
     cudaMemcpy(dev_vertices, scene->vertices.data(), scene->vertices.size() * sizeof(Vertex), cudaMemcpyHostToDevice);
 
+    tmp_textures.resize(hst_scene->textures.size());
+    for (size_t i = 0; i < hst_scene->textures.size(); i++) {
+        cudaMalloc(&tmp_textures[i].imgData, hst_scene->textures[i].width * hst_scene->textures[i].height * hst_scene->textures[i].channel * sizeof(unsigned char));
+        cudaMemcpy(tmp_textures[i].imgData, hst_scene->textures[i].imgData, hst_scene->textures[i].width * hst_scene->textures[i].height * hst_scene->textures[i].channel * sizeof(unsigned char), cudaMemcpyHostToDevice);
+        tmp_textures[i].width = hst_scene->textures[i].width;
+        tmp_textures[i].height = hst_scene->textures[i].height;
+        tmp_textures[i].channel = hst_scene->textures[i].channel;
+    }
+    cudaMalloc(&dev_textures, tmp_textures.size() * sizeof(Texture));
+    cudaMemcpy(dev_textures, tmp_textures.data(), tmp_textures.size() * sizeof(Texture), cudaMemcpyHostToDevice);
+
     checkCUDAError("pathtraceInit");
 }
 
@@ -127,6 +140,10 @@ void pathtraceFree()
     cudaFree(dev_intersections);
     // TODO: clean up any extra device memory you created
     cudaFree(dev_vertices);
+    for (size_t i = 0; i < tmp_textures.size(); i++) {
+        cudaFree(tmp_textures[i].imgData);
+    }
+    cudaFree(dev_textures);
     checkCUDAError("pathtraceFree");
 }
 
@@ -185,12 +202,14 @@ __global__ void computeIntersections(
         float t;
         glm::vec3 intersect_point;
         glm::vec3 normal;
+        glm::vec2 uv;
         float t_min = FLT_MAX;
         int hit_geom_index = -1;
         bool outside = true;
 
         glm::vec3 tmp_intersect;
         glm::vec3 tmp_normal;
+        glm::vec2 tmp_uv = glm::vec2(0.0);
 
         // naive parse through global geoms
 
@@ -209,7 +228,7 @@ __global__ void computeIntersections(
             // TODO: add more intersection tests here... triangle? metaball? CSG?
             else if (geom.type == CUSTOM) 
             {
-                t = customMeshIntersectionTest(geom, pathSegment.ray, tmp_intersect, tmp_normal, vertex_size, vertices, outside);
+                t = customMeshIntersectionTest(geom, pathSegment.ray, tmp_intersect, tmp_normal, tmp_uv, vertex_size, vertices, outside);
             }
             // Compute the minimum t from the intersection tests to determine what
             // scene geometry object was hit first.
@@ -219,6 +238,7 @@ __global__ void computeIntersections(
                 hit_geom_index = i;
                 intersect_point = tmp_intersect;
                 normal = tmp_normal;
+                uv = tmp_uv;
             }
         }
 
@@ -233,6 +253,7 @@ __global__ void computeIntersections(
             intersections[path_index].materialId = geoms[hit_geom_index].materialid;
             intersections[path_index].surfaceNormal = normal;
             intersections[path_index].outside = outside;
+            intersections[path_index].uv = uv;
         }
     }
 }
@@ -296,7 +317,8 @@ __global__ void shadeFakeMaterial_changed(
     int num_paths,
     ShadeableIntersection* shadeableIntersections,
     PathSegment* pathSegments,
-    Material* materials)
+    Material* materials,
+    Texture* textures)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_paths)
@@ -311,7 +333,7 @@ __global__ void shadeFakeMaterial_changed(
             thrust::uniform_real_distribution<float> u01(0, 1);
 
             Material material = materials[intersection.materialId];
-            glm::vec3 materialColor = material.color;
+            glm::vec3 materialColor = material.baseColorTextIdx == -1 ? material.color : getColorFromTexture(intersection.uv, textures[material.baseColorTextIdx]);
 
             // If the material indicates that the object was a light, "light" the ray
             if (material.emittance > 0.0f) {
@@ -322,11 +344,7 @@ __global__ void shadeFakeMaterial_changed(
             // like what you would expect from shading in a rasterizer like OpenGL.
             // TODO: replace this! you should be able to start with basically a one-liner
             else {
-                //float lightTerm = glm::dot(intersection.surfaceNormal, glm::vec3(0.0f, 1.0f, 0.0f));
-                scatterRay(pathSegments[idx], getPointOnRay(pathSegments[idx].ray, intersection.t), intersection.surfaceNormal, intersection.outside, material, rng);
-                /*pathSegments[idx].remainingBounces--;*/
-                //pathSegments[idx].color *= (materialColor * lightTerm) * 0.3f + ((1.0f - intersection.t * 0.02f) * materialColor) * 0.7f;
-                //pathSegments[idx].color *= u01(rng); // apply some noise because why not
+                scatterRay(pathSegments[idx], getPointOnRay(pathSegments[idx].ray, intersection.t), intersection.surfaceNormal, intersection.uv,intersection.outside, material, materialColor, rng);
             }
             // If there was no intersection, color the ray black.
             // Lots of renderers use 4 channel color, RGBA, where A = alpha, often
@@ -468,7 +486,8 @@ void pathtrace(uchar4* pbo, int frame, int iter)
             num_paths,
             dev_intersections,
             dev_paths,
-            dev_materials
+            dev_materials,
+            dev_textures
             );
 
         cudaDeviceSynchronize();

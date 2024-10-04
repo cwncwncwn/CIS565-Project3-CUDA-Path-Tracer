@@ -117,6 +117,7 @@ __host__ __device__ float customMeshIntersectionTest(
     Ray r,
     glm::vec3& intersectionPoint,
     glm::vec3& normal,
+    glm::vec2& uv,
     int vertex_size,
     Vertex* vertices,
     bool& outside)
@@ -127,7 +128,7 @@ __host__ __device__ float customMeshIntersectionTest(
     //      test intersect. 
     //          If not, return -1
     //          If intersected, determine inside/outside based on cos(dir, normal), return t
-    Ray q;
+    Ray q = r;
     q.origin = multiplyMV(mesh.inverseTransform, glm::vec4(r.origin, 1.0f));
     q.direction = glm::normalize(multiplyMV(mesh.inverseTransform, glm::vec4(r.direction, 0.0f)));
 
@@ -172,7 +173,7 @@ __host__ __device__ float customMeshIntersectionTest(
     }
 
     // compute intersection
-    intersectionPoint = q.origin + t_final * q.direction;
+    intersectionPoint = getPointOnRay(q, t_final);
     glm::vec3 baryCentric_factor = baryCentric_interpolation(
         vertices[t_v_idx].pos,
         vertices[t_v_idx + 1].pos,
@@ -181,15 +182,23 @@ __host__ __device__ float customMeshIntersectionTest(
 
     // compute normal
     normal = 
-        vertices[t_v_idx].normal * baryCentric_factor.x +
+        glm::normalize(vertices[t_v_idx].normal * baryCentric_factor.x +
         vertices[t_v_idx + 1].normal * baryCentric_factor.y +
-        vertices[t_v_idx + 2].normal * baryCentric_factor.z;
+        vertices[t_v_idx + 2].normal * baryCentric_factor.z);
+
+    uv = vertices[t_v_idx].uv * baryCentric_factor.x +
+        vertices[t_v_idx + 1].uv * baryCentric_factor.y +
+        vertices[t_v_idx + 2].uv * baryCentric_factor.z;
 
     // evaluate inside or outside
-    outside = dot(normalize(normal), normalize(q.direction)) <= 0.f;
+    outside = dot(normalize(normal), normalize(q.direction)) < 0.f;
 
     intersectionPoint = multiplyMV(mesh.transform, glm::vec4(intersectionPoint, 1.f));
-    normal = glm::normalize(multiplyMV(mesh.transform, glm::vec4(normal, 0.f)));
+    normal = glm::normalize(multiplyMV(mesh.invTranspose, glm::vec4(normal, 0.f)));
+    if (!outside)
+    {
+        normal = -normal;
+    }
 
     return t_final;
 }

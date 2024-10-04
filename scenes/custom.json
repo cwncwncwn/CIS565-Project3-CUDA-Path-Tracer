@@ -3,7 +3,7 @@
         "light": {
             "TYPE": "Emitting",
             "RGB": [ 1.0, 1.0, 1.0 ],
-            "EMITTANCE": 5.0
+            "EMITTANCE": 15.0
         },
         "diffuse_white": {
             "TYPE": "Diffuse",
@@ -70,7 +70,7 @@
         },
         {
             "TYPE": "cube",
-            "MATERIAL": "diffuse_white",
+            "MATERIAL": "diffuse_blue",
             "TRANS": [ 0.0, 5.0, -5.0 ],
             "ROTAT": [ 0.0, 90.0, 0.0 ],
             "SCALE": [ 0.01, 10.0, 10.0 ]
@@ -91,12 +91,12 @@
         },
         {
             "TYPE": "custom",
-            "PATH": "boxes",
+            "PATH": "torii",
             "EXTERNAL_MATERIAL": true,
-            "MATERIAL": "diffuse_white",
+            "MATERIAL": "transmissive_white",
             "TRANS": [ 0.0, 0.0, 0.0 ],
-            "ROTAT": [ 0.0, 10.0, 0.0 ],
-            "SCALE": [ 1.5, 1.5, 1.5 ]
+            "ROTAT": [ 0.0, 0.0, 0.0 ],
+            "SCALE": [ 1.0, 1.0, 1.0 ]
         }
     ]
 }

@@ -60,7 +60,6 @@ struct Material
     float hasRefractive;
     float indexOfRefraction;
     float emittance;
-    float hasTexture;
     int baseColorTextIdx;
 };
 
@@ -101,5 +100,6 @@ struct ShadeableIntersection
   float t;
   glm::vec3 surfaceNormal;
   int materialId;
+  glm::vec2 uv;
   bool outside;
 };

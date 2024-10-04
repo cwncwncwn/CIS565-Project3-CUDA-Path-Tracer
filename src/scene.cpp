@@ -39,6 +39,7 @@ void Scene::loadFromJSON(const std::string& jsonName)
         const auto& name = item.key();
         const auto& p = item.value();
         Material newMaterial{};
+        newMaterial.baseColorTextIdx = -1;
         // TODO: handle materials loading differently
         if (p["TYPE"] == "Diffuse")
         {
@@ -130,23 +131,32 @@ void Scene::loadFromJSON(const std::string& jsonName)
             auto& attrib = reader.GetAttrib();
             auto& shapes = reader.GetShapes();
             auto& materials = reader.GetMaterials();
+            std::vector<int> matIdxList;
             
             for (int materialIdx = 0; materialIdx < materials.size(); materialIdx++) {
-                Material newMaterial;
+                Material newMaterial{};
+                newMaterial.baseColorTextIdx = -1;
 
+                // load baseColor texture. If baseColor texture name is not empty, load the texture
                 std::string textName = materials[materialIdx].diffuse_texname;                
                 if (!textName.empty()) {
                     std::string texturePath = jsonName.substr(0, pos + 1) + "Mesh/" + "Textures/" + textName;
-                    int imgWidth, imgHeight, channels;
-                    unsigned char* imgData = stbi_load(texturePath.c_str(), &imgWidth, &imgHeight, &channels, 0);
-                    if (imgData == nullptr) {
+                    Texture diffuseTexture{};
+                    diffuseTexture.imgData = stbi_load(texturePath.c_str(), &diffuseTexture.width, &diffuseTexture.height, &diffuseTexture.channel, 0);
+                    if (diffuseTexture.imgData == nullptr) {
                         std::cerr << "Failed to load texture: " << texturePath << std::endl;
                     }
-
+                    newMaterial.baseColorTextIdx = this->textures.size();
+                    this->textures.push_back(diffuseTexture);
                 }
 
+                newMaterial.color = glm::vec3(materials[materialIdx].diffuse[0], materials[materialIdx].diffuse[1], materials[materialIdx].diffuse[2]);
+                //newMaterial.hasRefractive = 1;
+                newMaterial.indexOfRefraction = materials[materialIdx].ior;
+                matIdxList.push_back(this->materials.size());
+                this->materials.push_back(newMaterial);
             }
-
+            
             // for each shape:
             //  record index of the mesh in geoms
             //  for each index:
@@ -154,14 +164,14 @@ void Scene::loadFromJSON(const std::string& jsonName)
             for (int shapeIdx = 0; shapeIdx < shapes.size(); shapeIdx++) {
                 // record mesh index in geoms                
                 // record vertices
-                Geom newGeom;
+                Geom newGeom{};
                 newGeom.type = CUSTOM;
 
                 auto& currMesh = shapes[shapeIdx].mesh;
                 newGeom.vertex_indices.x = this->vertices.size();
 
                 for (size_t idx = 0; idx < currMesh.indices.size(); idx++) {
-                    Vertex v;
+                    Vertex v{};
                     for (int i = 0; i < 3; i++) {
                         v.pos[i] = attrib.vertices[currMesh.indices[idx].vertex_index * 3 + i];
                         v.normal[i] = attrib.normals[currMesh.indices[idx].normal_index * 3 + i];
@@ -176,13 +186,17 @@ void Scene::loadFromJSON(const std::string& jsonName)
                 // new material for geoms
                 bool useExtMat = p["EXTERNAL_MATERIAL"];
                 if (useExtMat) {
-
+                    int tmp = currMesh.material_ids[0];
+                    if (tmp >= matIdxList.size()) {
+                        std::cerr << "Failed to load material: please turn off EXTERNAL_MATERIAL when not needed" << std::endl;
+                        exit(1);
+                    }
+                    newGeom.materialid = matIdxList[currMesh.material_ids[0]];
                 }
                 else {
-
+                    newGeom.materialid = MatNameToID[p["MATERIAL"]];
                 }
 
-                newGeom.materialid = MatNameToID[p["MATERIAL"]];
                 const auto& trans = p["TRANS"];
                 const auto& rotat = p["ROTAT"];
                 const auto& scale = p["SCALE"];

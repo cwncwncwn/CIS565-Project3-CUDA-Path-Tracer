@@ -78,6 +78,7 @@ __host__ __device__ float customMeshIntersectionTest(
     Ray r,
     glm::vec3& intersectionPoint,
     glm::vec3& normal,
+    glm::vec2& uv,
     int vertex_size,
     Vertex* vertices,
     bool& outside);

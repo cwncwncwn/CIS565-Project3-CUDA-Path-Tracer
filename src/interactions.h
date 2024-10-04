@@ -41,6 +41,13 @@ __host__ __device__ void scatterRay(
     PathSegment& pathSegment,
     glm::vec3 intersect,
     glm::vec3 normal,
+    glm::vec2 uv,
     bool outside,
     const Material& m,
+    glm::vec3 materialColor,
     thrust::default_random_engine& rng);
+
+
+__host__ __device__ float reflectance(float cosine, float refraction_index);
+
+__host__ __device__ glm::vec3 getColorFromTexture(glm::vec2 uv, const Texture& texture);
