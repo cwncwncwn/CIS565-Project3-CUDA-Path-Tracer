@@ -6,6 +6,8 @@
 #include <thrust/execution_policy.h>
 #include <thrust/random.h>
 #include <thrust/remove.h>
+#include <thrust/device_vector.h>
+#include <thrust/sort.h>
 
 #include "sceneStructs.h"
 #include "scene.h"
@@ -16,6 +18,7 @@
 #include "interactions.h"
 
 #define ERRORCHECK 1
+#define MATERIAL_SORT 1
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
@@ -82,6 +85,11 @@ static PathSegment* dev_paths = NULL;
 static ShadeableIntersection* dev_intersections = NULL;
 // TODO: static variables for device memory, any extra info you need, etc
 // ...
+static int* dev_materialIds = NULL;
+thrust::device_ptr<int> thrust_materialIds;
+thrust::device_ptr<PathSegment> thrust_pathSegments;
+thrust::device_ptr<ShadeableIntersection> thrust_intersections;
+
 static Vertex* dev_vertices = NULL;
 static Texture* dev_textures = NULL;
 static std::vector<Texture> tmp_textures;
@@ -114,6 +122,8 @@ void pathtraceInit(Scene* scene)
 
     // TODO: initialize any extra device memeory you need
 
+    cudaMalloc(&dev_materialIds, pixelcount * sizeof(int));
+
     cudaMalloc(&dev_vertices, scene->vertices.size() * sizeof(Vertex));
     cudaMemcpy(dev_vertices, scene->vertices.data(), scene->vertices.size() * sizeof(Vertex), cudaMemcpyHostToDevice);
 
@@ -139,6 +149,7 @@ void pathtraceFree()
     cudaFree(dev_materials);
     cudaFree(dev_intersections);
     // TODO: clean up any extra device memory you created
+    cudaFree(dev_materialIds);
     cudaFree(dev_vertices);
     for (size_t i = 0; i < tmp_textures.size(); i++) {
         cudaFree(tmp_textures[i].imgData);
@@ -258,48 +269,11 @@ __global__ void computeIntersections(
     }
 }
 
-__global__ void shadeFakeMaterial(
-    int iter,
-    int num_paths,
-    ShadeableIntersection* shadeableIntersections,
-    PathSegment* pathSegments,
-    Material* materials)
-{
+__global__ void getMaterialIds(int num_paths, ShadeableIntersection* intersections, int* materialIds) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_paths)
     {
-        ShadeableIntersection intersection = shadeableIntersections[idx];
-        if (intersection.t > 0.0f) // if the intersection exists...
-        {
-            // Set up the RNG
-            // LOOK: this is how you use thrust's RNG! Please look at
-            // makeSeededRandomEngine as well.
-            thrust::default_random_engine rng = makeSeededRandomEngine(iter, idx, 0);
-            thrust::uniform_real_distribution<float> u01(0, 1);
-
-            Material material = materials[intersection.materialId];
-            glm::vec3 materialColor = material.color;
-
-            // If the material indicates that the object was a light, "light" the ray
-            if (material.emittance > 0.0f) {
-                pathSegments[idx].color *= (materialColor * material.emittance);
-            }
-            // Otherwise, do some pseudo-lighting computation. This is actually more
-            // like what you would expect from shading in a rasterizer like OpenGL.
-            // TODO: replace this! you should be able to start with basically a one-liner
-            else {
-                float lightTerm = glm::dot(intersection.surfaceNormal, glm::vec3(0.0f, 1.0f, 0.0f));
-                pathSegments[idx].color *= (materialColor * lightTerm) * 0.3f + ((1.0f - intersection.t * 0.02f) * materialColor) * 0.7f;
-                pathSegments[idx].color *= u01(rng); // apply some noise because why not
-            }
-            // If there was no intersection, color the ray black.
-            // Lots of renderers use 4 channel color, RGBA, where A = alpha, often
-            // used for opacity, in which case they can indicate "no opacity".
-            // This can be useful for post-processing and image compositing.
-        }
-        else {
-            pathSegments[idx].color = glm::vec3(0.0f);
-        }
+        materialIds[idx] = intersections[idx].materialId;
     }
 }
 
@@ -312,7 +286,7 @@ __global__ void shadeFakeMaterial(
 // Note that this shader does NOT do a BSDF evaluation!
 // Your shaders should handle that - this can allow techniques such as
 // bump mapping.
-__global__ void shadeFakeMaterial_changed(
+__global__ void shadeMaterial(
     int iter,
     int num_paths,
     ShadeableIntersection* shadeableIntersections,
@@ -481,7 +455,21 @@ void pathtrace(uchar4* pbo, int frame, int iter)
         // TODO: compare between directly shading the path segments and shading
         // path segments that have been reshuffled to be contiguous in memory.
 
-        shadeFakeMaterial_changed << <numblocksPathSegmentTracing, blockSize1d >> > (
+#if MATERIAL_SORT
+        getMaterialIds << <numblocksPathSegmentTracing, blockSize1d >> > (num_paths, dev_intersections, dev_materialIds);
+        cudaDeviceSynchronize();
+        checkCUDAError("material sort");
+
+        thrust::device_ptr<int> thrust_materalIds(dev_materialIds);
+        thrust::device_ptr<PathSegment> thrust_pathSegments(dev_paths);
+        thrust::device_ptr<ShadeableIntersection> thrust_intersections(dev_intersections);
+
+        thrust::sort_by_key(thrust_materalIds, thrust_materalIds + num_paths, thrust::make_zip_iterator(thrust::make_tuple(thrust_pathSegments, thrust_intersections)));
+        cudaDeviceSynchronize();
+#endif
+
+
+        shadeMaterial << <numblocksPathSegmentTracing, blockSize1d >> > (
             iter,
             num_paths,
             dev_intersections,
@@ -492,7 +480,7 @@ void pathtrace(uchar4* pbo, int frame, int iter)
 
         cudaDeviceSynchronize();
 
-        updateColor << <numBlocksPixels, blockSize1d >> > (num_paths, dev_image, dev_paths);
+        updateColor << <numblocksPathSegmentTracing, blockSize1d >> > (num_paths, dev_image, dev_paths);
 
         PathSegment* new_end = thrust::remove_if(
             thrust::device,         // Execution policy for device-side computation
@@ -500,8 +488,9 @@ void pathtrace(uchar4* pbo, int frame, int iter)
             dev_paths + num_paths,  // End of the array (device pointer)
             isTerminated()          // Predicate to remove terminated paths
         );
+        cudaDeviceSynchronize();
 
-        if (new_end == dev_paths) {
+        if (new_end == dev_paths || depth >= traceDepth) {
             iterationComplete = true;   // All paths have been terminated
         }
         else {
@@ -515,7 +504,7 @@ void pathtrace(uchar4* pbo, int frame, int iter)
     }
 
     // Assemble this iteration and apply it to the image
-    //finalGather << <numBlocksPixels, blockSize1d >> > (num_paths, dev_image, dev_paths);
+    finalGather << <numBlocksPixels, blockSize1d >> > (num_paths, dev_image, dev_paths);
 
     ///////////////////////////////////////////////////////////////////////////
 
