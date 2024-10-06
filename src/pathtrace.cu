@@ -22,7 +22,7 @@
 
 #define ERRORCHECK 1
 #define MATERIAL_SORT 0
-#define DENOISE 0
+#define DENOISE 1
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
@@ -98,7 +98,9 @@ thrust::device_ptr<ShadeableIntersection> thrust_intersections;
 static glm::vec3* dev_image_postProcess = NULL;
 static Vertex* dev_vertices = NULL;
 static Texture* dev_textures = NULL;
+static EnvTexture* dev_envMap = NULL;
 static std::vector<Texture> tmp_textures;
+static EnvTexture tmpEnvText;
 static glm::vec3* dev_surfaceNormals = NULL;
 static glm::vec3* dev_surfaceAlbedo = NULL;
 
@@ -150,6 +152,18 @@ void pathtraceInit(Scene* scene)
     cudaMalloc(&dev_textures, tmp_textures.size() * sizeof(Texture));
     cudaMemcpy(dev_textures, tmp_textures.data(), tmp_textures.size() * sizeof(Texture), cudaMemcpyHostToDevice);
 
+    cudaMalloc(&tmpEnvText.imgData, hst_scene->environmentMap.width * hst_scene->environmentMap.height * hst_scene->environmentMap.channel * sizeof(float));
+    cudaMemcpy(tmpEnvText.imgData, hst_scene->environmentMap.imgData, hst_scene->environmentMap.width * hst_scene->environmentMap.height * hst_scene->environmentMap.channel * sizeof(float), cudaMemcpyHostToDevice);
+    tmpEnvText.width = hst_scene->environmentMap.width;
+    tmpEnvText.height = hst_scene->environmentMap.height;
+    tmpEnvText.channel = hst_scene->environmentMap.channel;
+    tmpEnvText.isTextureValid = hst_scene->environmentMap.isTextureValid;
+    tmpEnvText.color = hst_scene->environmentMap.color;
+    tmpEnvText.brightness = hst_scene->environmentMap.brightness;
+    cudaMalloc(&dev_envMap, sizeof(EnvTexture));
+    cudaMemcpy(dev_envMap, &tmpEnvText, sizeof(EnvTexture), cudaMemcpyHostToDevice);
+
+
     cudaMalloc(&dev_image_postProcess, pixelcount * sizeof(glm::vec3));
     cudaMemset(dev_image_postProcess, 0, pixelcount * sizeof(glm::vec3));
 
@@ -176,6 +190,8 @@ void pathtraceFree()
     for (size_t i = 0; i < tmp_textures.size(); i++) {
         cudaFree(tmp_textures[i].imgData);
     }
+    cudaFree(tmpEnvText.imgData);
+    cudaFree(dev_envMap);
     cudaFree(dev_textures);
     cudaFree(dev_image_postProcess);
     cudaFree(dev_surfaceNormals);
@@ -352,7 +368,8 @@ __global__ void shadeMaterial(
     ShadeableIntersection* shadeableIntersections,
     PathSegment* pathSegments,
     Material* materials,
-    Texture* textures)
+    Texture* textures,
+    EnvTexture* envMap)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     PathSegment& pathSegment = pathSegments[idx];
@@ -396,7 +413,22 @@ __global__ void shadeMaterial(
             // This can be useful for post-processing and image compositing.
         }
         else {
-            pathSegments[idx].color = glm::vec3(0.0f);
+            if (envMap->isTextureValid == 1) {
+                glm::vec3 direction = glm::normalize(pathSegment.ray.direction);
+                float u = 0.5f + (atan2(direction.z, direction.x) / (2.0f * PI));
+                float v = 0.5f - (asin(direction.y) / PI);
+
+                int x = static_cast<int>(u * envMap->width);
+                int y = static_cast<int>(v * envMap->height);
+
+                pathSegments[idx].color *= glm::clamp(glm::vec3(envMap->imgData[3 * (y * envMap->width + x) + 0],
+                envMap->imgData[3 * (y * envMap->width + x) + 1],
+                envMap->imgData[3 * (y * envMap->width + x) + 2]), glm::vec3(0.0), glm::vec3(1.0)) * envMap->brightness;
+            }
+            else {
+                pathSegments[idx].color *= envMap->color;
+            }
+
             pathSegments[idx].remainingBounces = 0;
         }
     }
@@ -597,7 +629,8 @@ void pathtrace(uchar4* pbo, int frame, int iter)
             dev_intersections,
             dev_paths,
             dev_materials,
-            dev_textures
+            dev_textures,
+            dev_envMap
             );
 
         cudaDeviceSynchronize();

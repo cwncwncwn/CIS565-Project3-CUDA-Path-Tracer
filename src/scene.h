@@ -25,5 +25,6 @@ public:
     std::vector<Material> materials;
     std::vector<Vertex> vertices;
     std::vector<Texture> textures;
+    EnvTexture environmentMap;
     RenderState state;
 };

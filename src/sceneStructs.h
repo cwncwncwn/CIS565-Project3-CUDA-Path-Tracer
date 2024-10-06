@@ -41,6 +41,16 @@ struct Geom
     glm::mat4 invTranspose;
 };
 
+struct EnvTexture {
+    int isTextureValid;
+    glm::vec3 color;
+    int width;
+    int height;
+    int channel;
+    float brightness;
+    float* imgData;
+};
+
 struct Texture {
     int width;
     int height;

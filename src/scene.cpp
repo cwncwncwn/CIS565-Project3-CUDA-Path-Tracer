@@ -32,6 +32,42 @@ void Scene::loadFromJSON(const std::string& jsonName)
 {
     std::ifstream f(jsonName);
     json data = json::parse(f);
+
+    if (data.contains("Environment")) {
+        const auto& envMapData = data["Environment"];
+        this->environmentMap.brightness = 1;
+        if (envMapData.contains("FILENAME")) {
+            this->environmentMap.isTextureValid = 1;
+
+            std::size_t pos = jsonName.rfind("/");  // Find the last '/'
+            std::string fileName = envMapData["FILENAME"];
+            std::string texturePath = jsonName.substr(0, pos + 1) + "Mesh/" + "Textures/" + fileName +".hdr";
+
+            this->environmentMap.imgData = stbi_loadf(texturePath.c_str(), &(this->environmentMap.width), &(this->environmentMap.height), &(this->environmentMap.channel), 0);
+            if (!(this->environmentMap.imgData)) {
+                std::cerr << "Failed to load HDR map!" << std::endl;
+            }
+
+            if (envMapData.contains("BRIGHTNESS")) {
+                this->environmentMap.brightness = envMapData["BRIGHTNESS"];
+            }
+        }
+        else {
+            this->environmentMap.isTextureValid = 0;
+            if (envMapData.contains("COLOR")) {
+                const auto& col = envMapData["COLOR"];
+                this->environmentMap.color = glm::vec3(col[0], col[1], col[2]);
+            }
+            else {
+                this->environmentMap.color = glm::vec3(0.f);
+            }
+        }
+    }
+    else {
+        this->environmentMap.isTextureValid = 0;
+        this->environmentMap.color = glm::vec3(0.f);
+    }
+
     const auto& materialsData = data["Materials"];
     std::unordered_map<std::string, uint32_t> MatNameToID;
     for (const auto& item : materialsData.items())
