@@ -40,6 +40,7 @@ void Scene::loadFromJSON(const std::string& jsonName)
         const auto& p = item.value();
         Material newMaterial{};
         newMaterial.baseColorTextIdx = -1;
+        newMaterial.bumpMapTextIdx = -1;
         // TODO: handle materials loading differently
         if (p["TYPE"] == "Diffuse")
         {
@@ -136,6 +137,7 @@ void Scene::loadFromJSON(const std::string& jsonName)
             for (int materialIdx = 0; materialIdx < materials.size(); materialIdx++) {
                 Material newMaterial{};
                 newMaterial.baseColorTextIdx = -1;
+                newMaterial.bumpMapTextIdx = -1;
 
                 // load baseColor texture. If baseColor texture name is not empty, load the texture
                 std::string textName = materials[materialIdx].diffuse_texname;                
@@ -148,6 +150,19 @@ void Scene::loadFromJSON(const std::string& jsonName)
                     }
                     newMaterial.baseColorTextIdx = this->textures.size();
                     this->textures.push_back(diffuseTexture);
+                }
+
+                // load normal map texture. If bump map texture name is not empty, load the texture
+                textName = materials[materialIdx].bump_texname;
+                if (!textName.empty()) {
+                    std::string texturePath = jsonName.substr(0, pos + 1) + "Mesh/" + "Textures/" + textName;
+                    Texture bumpTexture{};
+                    bumpTexture.imgData = stbi_load(texturePath.c_str(), &bumpTexture.width, &bumpTexture.height, &bumpTexture.channel, 0);
+                    if (bumpTexture.imgData == nullptr) {
+                        std::cerr << "Failed to load texture: " << texturePath << std::endl;
+                    }
+                    newMaterial.bumpMapTextIdx = this->textures.size();
+                    this->textures.push_back(bumpTexture);
                 }
 
                 newMaterial.color = glm::vec3(materials[materialIdx].diffuse[0], materials[materialIdx].diffuse[1], materials[materialIdx].diffuse[2]);

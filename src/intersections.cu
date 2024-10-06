@@ -56,6 +56,18 @@ __host__ __device__ float boxIntersectionTest(
     return -1;
 }
 
+__host__ __device__ void CoordinateSystem(const glm::vec3& v1, glm::vec3* v2, glm::vec3* v3)
+{
+    if (std::abs(v1.x) > std::abs(v1.y)) {
+        *v2 = glm::normalize(glm::vec3(-v1.z, 0, v1.x) / std::sqrt(v1.x * v1.x + v1.z * v1.z));
+    }
+    else {
+        *v2 = glm::normalize(glm::vec3(0, v1.z, -v1.y) / std::sqrt(v1.y * v1.y + v1.z * v1.z));
+    }
+    *v3 = glm::normalize(glm::cross(v1, *v2));
+}
+
+
 __host__ __device__ float sphereIntersectionTest(
     Geom sphere,
     Ray r,
@@ -120,6 +132,8 @@ __host__ __device__ float customMeshIntersectionTest(
     glm::vec2& uv,
     int vertex_size,
     Vertex* vertices,
+    Material* materials,
+    Texture* textures,
     bool& outside)
 {
     // from the big lists:  
@@ -180,15 +194,28 @@ __host__ __device__ float customMeshIntersectionTest(
         vertices[t_v_idx + 2].pos,
         intersectionPoint);
 
-    // compute normal
-    normal = 
-        glm::normalize(vertices[t_v_idx].normal * baryCentric_factor.x +
-        vertices[t_v_idx + 1].normal * baryCentric_factor.y +
-        vertices[t_v_idx + 2].normal * baryCentric_factor.z);
-
     uv = vertices[t_v_idx].uv * baryCentric_factor.x +
         vertices[t_v_idx + 1].uv * baryCentric_factor.y +
         vertices[t_v_idx + 2].uv * baryCentric_factor.z;
+
+    // compute normal
+    int bumpMapIdx = materials[mesh.materialid].bumpMapTextIdx;
+    if (bumpMapIdx < 0) {
+        normal = glm::normalize(vertices[t_v_idx].normal * baryCentric_factor.x +
+                vertices[t_v_idx + 1].normal * baryCentric_factor.y +
+                vertices[t_v_idx + 2].normal * baryCentric_factor.z);
+    }
+    else {
+        glm::vec3 normalColor = 2.f * getColorFromTexture(uv, textures[bumpMapIdx]) - 1.f;
+        glm::vec3 tangent, bitangent = glm::vec3(0.0);
+        CoordinateSystem(normalColor, &tangent, &bitangent);
+        glm::mat3 TBN = glm::mat3(tangent, bitangent, normalColor);
+        normal = glm::normalize(TBN * normalColor);
+    }
+
+    
+
+
 
     // evaluate inside or outside
     outside = dot(normalize(normal), normalize(q.direction)) < 0.f;
@@ -213,4 +240,14 @@ __host__ __device__ glm::vec3 baryCentric_interpolation(const glm::vec3& p1, con
 
 __host__ __device__ float triangle_area(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2) {
     return 0.5 * glm::length(glm::cross(p2 - p1, p0 - p1));
+}
+
+__host__ __device__ glm::vec3 getColorFromTexture(glm::vec2 uv, const Texture& texture) {
+    int x = static_cast<int>(uv.x * texture.width) % texture.width;
+    int y = static_cast<int>((1.f - uv.y) * texture.height) % texture.height;
+    int index = (y * texture.width + x) * texture.channel;
+    float r = texture.imgData[index] / 255.0f;
+    float g = texture.imgData[index + 1] / 255.0f;
+    float b = texture.imgData[index + 2] / 255.0f;
+    return glm::vec3(r, g, b);
 }

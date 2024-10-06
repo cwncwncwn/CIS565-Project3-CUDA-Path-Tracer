@@ -47,16 +47,6 @@ __host__ __device__ float reflectance(float cosine, float refraction_index) {
     return r0 + (1.0 - r0) * glm::pow((1.0 - cosine), 5.0);
 }
 
-__host__ __device__ glm::vec3 getColorFromTexture(glm::vec2 uv, const Texture& texture) {
-    int x = static_cast<int>(uv.x * texture.width) % texture.width;
-    int y = static_cast<int>((1.f - uv.y) * texture.height) % texture.height;
-    int index = (y * texture.width + x) * texture.channel;
-    float r = texture.imgData[index] / 255.0f;
-    float g = texture.imgData[index + 1] / 255.0f;
-    float b = texture.imgData[index + 2] / 255.0f;
-    return glm::vec3(r, g, b);
-}
-
 __host__ __device__ void scatterRay(
     PathSegment & pathSegment,
     glm::vec3 intersect,

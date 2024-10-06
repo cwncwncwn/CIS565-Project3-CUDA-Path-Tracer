@@ -50,4 +50,3 @@ __host__ __device__ void scatterRay(
 
 __host__ __device__ float reflectance(float cosine, float refraction_index);
 
-__host__ __device__ glm::vec3 getColorFromTexture(glm::vec2 uv, const Texture& texture);

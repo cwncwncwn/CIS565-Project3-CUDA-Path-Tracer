@@ -61,6 +61,7 @@ struct Material
     float indexOfRefraction;
     float emittance;
     int baseColorTextIdx;
+    int bumpMapTextIdx;
 };
 
 struct Camera

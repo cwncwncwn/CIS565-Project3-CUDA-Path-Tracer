@@ -81,6 +81,8 @@ __host__ __device__ float customMeshIntersectionTest(
     glm::vec2& uv,
     int vertex_size,
     Vertex* vertices,
+    Material* materials,
+    Texture* textures,
     bool& outside);
 
 __host__ __device__ glm::vec3 baryCentric_interpolation(
@@ -93,3 +95,5 @@ __host__ __device__ float triangle_area(
     const glm::vec3& p0,
     const glm::vec3& p1,
     const glm::vec3& p2);
+
+__host__ __device__ glm::vec3 getColorFromTexture(glm::vec2 uv, const Texture& texture);
