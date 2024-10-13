@@ -21,7 +21,7 @@
 #include "interactions.h"
 
 #define ERRORCHECK 1
-#define MATERIAL_SORT 0
+#define MATERIAL_SORT 1
 #define DENOISE 1
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
@@ -423,7 +423,7 @@ __global__ void shadeMaterial(
 
                 pathSegments[idx].color *= glm::clamp(glm::vec3(envMap->imgData[3 * (y * envMap->width + x) + 0],
                 envMap->imgData[3 * (y * envMap->width + x) + 1],
-                envMap->imgData[3 * (y * envMap->width + x) + 2]), glm::vec3(0.0), glm::vec3(1.0)) * envMap->brightness;
+                envMap->imgData[3 * (y * envMap->width + x) + 2]), glm::vec3(0.0), glm::vec3(1.0)) * envMap->brightness * glm::vec3(0.9, 0.8, 1.0);
             }
             else {
                 pathSegments[idx].color *= envMap->color;

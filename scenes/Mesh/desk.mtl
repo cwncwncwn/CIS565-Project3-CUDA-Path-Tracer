@@ -6,6 +6,22 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.20 0.20 0.20
 Ns 30.00
+newmtl FBXASC229FBXASC164FBXASC154FBXASC232FBXASC190FBXASC185FBXASC229FBXASC189FBXASC162_1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl FBXASC229FBXASC164FBXASC154FBXASC232FBXASC190FBXASC185FBXASC229FBXASC189FBXASC162_2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
 newmtl FBXASC231FBXASC187FBXASC132_3SG
 illum 4
 Kd 0.47 0.62 0.62
@@ -22,73 +38,44 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.20 0.20 0.20
 Ns 30.00
+newmtl FBXASC231FBXASC187FBXASC132_9SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl FBXASC231FBXASC187FBXASC132_11SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 0.90 0.90 0.90
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl FBXASC231FBXASC187FBXASC132_13SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl FBXASC231FBXASC187FBXASC132_14SG
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
 newmtl lambert2SG
 illum 4
 Kd 0.00 0.00 0.00
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 map_Kd wood.jpg
-Ni 1.00
-newmtl lambert3SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd 20131212043834265311.jpg
-Ni 1.00
-newmtl lambert4SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd mo626710-files-8.jpg
-Ni 1.00
-newmtl lambert5SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd 4.jpg
-Ni 1.00
-newmtl lambert6SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd src=http___p8.itc.cn_q_70_images03_20210127_350ab36444474f17a9ab2fa9c1a60101.jpeg&refer=http___p8.itc.jpg
-Ni 1.00
-newmtl lambert7SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd light_tex.png
-Ni 1.00
-newmtl lambert8SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd b8c2a6aad1c4e8f5f81804915615168f07201e74594c0-NpRele_fw658.jpg
-Ni 1.00
-newmtl lambert9SG
-illum 4
-Kd 0.00 0.00 0.00
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-map_Kd 4.jpg
-Ni 1.00
-newmtl lambert10SG
-illum 4
-Kd 0.92 0.92 0.92
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
-Ni 1.00
-newmtl lambert11SG
-illum 4
-Kd 0.04 0.04 0.04
-Ka 0.00 0.00 0.00
-Tf 1.00 1.00 1.00
 Ni 1.00
 newmtl mesh_5129SG
 illum 4
@@ -98,9 +85,33 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 0.20 0.20 0.20
 Ns 30.00
+newmtl mesh_5157SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl mesh_5159SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
+newmtl mesh_8639SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.20 0.20 0.20
+Ns 30.00
 newmtl mesh_8737_1SG
 illum 4
-Kd 0.74 0.48 0.41
+Kd 0.31 0.20 0.17
 Ka 0.00 0.00 0.00
 Tf 1.00 1.00 1.00
 Ni 1.00

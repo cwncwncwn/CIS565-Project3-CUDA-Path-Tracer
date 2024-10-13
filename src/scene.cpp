@@ -200,7 +200,6 @@ void Scene::loadFromJSON(const std::string& jsonName)
                     newMaterial.bumpMapTextIdx = this->textures.size();
                     this->textures.push_back(bumpTexture);
                 }
-
                 newMaterial.color = glm::vec3(materials[materialIdx].diffuse[0], materials[materialIdx].diffuse[1], materials[materialIdx].diffuse[2]);
                 //newMaterial.hasRefractive = 1;
                 newMaterial.indexOfRefraction = materials[materialIdx].ior;
@@ -227,7 +226,8 @@ void Scene::loadFromJSON(const std::string& jsonName)
                         v.pos[i] = attrib.vertices[currMesh.indices[idx].vertex_index * 3 + i];
                         v.normal[i] = attrib.normals[currMesh.indices[idx].normal_index * 3 + i];
                         if (i < 2) {
-                            v.uv[i] = attrib.texcoords[currMesh.indices[idx].texcoord_index * 2 + i];
+                            float val = attrib.texcoords[currMesh.indices[idx].texcoord_index * 2 + i];
+                            v.uv[i] = val;
                         }
                     }
                     this->vertices.push_back(v);

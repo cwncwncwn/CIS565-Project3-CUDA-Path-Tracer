@@ -2,8 +2,8 @@
     "Materials": {
         "light": {
             "TYPE": "Emitting",
-            "RGB": [ 1.0, 1.0, 0.9 ],
-            "EMITTANCE": 2.0
+            "RGB": [ 0.6, 0.6, 1.0 ],
+            "EMITTANCE": 6.0
         },
         "diffuse_white": {
             "TYPE": "Diffuse",
@@ -37,36 +37,36 @@
     },
     "Camera": {
         "RES": [ 800, 800 ],
-        "FOVY": 45.0,
+        "FOVY": 20.0,
         "ITERATIONS": 5000,
         "DEPTH": 8,
         "FILE": "cornell",
-        "EYE": [ 0.0, 5.0, 10.5 ],
-        "LOOKAT": [ 0.0, 5.0, 0.0 ],
+        "EYE": [ 0.0, 3.0, 17.5 ],
+        "LOOKAT": [ 0, 5.0, 0 ],
         "UP": [ 0.0, 1.0, 0.0 ]
     },
     "Environment": {
         "FILENAME": "HDR_041_Path",
         "COLOR": [ 0.0, 0.0, 0.0 ],
-        "BRIGHTNESS": 1
+        "BRIGHTNESS": 2
     },
     "Objects": [
         {
             "TYPE": "custom",
-            "PATH": "torii",
+            "PATH": "combined",
             "EXTERNAL_MATERIAL": true,
             "MATERIAL": "transmissive_white",
-            "TRANS": [ 0.0, 0.0, 3.0 ],
-            "ROTAT": [ 0.0, -2.0, 0.0 ],
-            "SCALE": [ 1.3, 1.3, 1.3 ]
+            "TRANS": [ -0.5, 1.0, 2.5 ],
+            "ROTAT": [ 0.0, 35.0, 0.0 ],
+            "SCALE": [ 1.0, 1.0, 1.0 ]
         },
         {
             "TYPE": "cube",
             "PATH": "torii",
             "EXTERNAL_MATERIAL": false,
             "MATERIAL": "light",
-            "TRANS": [ 0.0, 0.0, 15.0 ],
-            "ROTAT": [ 0.0, 0.0, 0.0 ],
+            "TRANS": [ 0.0, 20.0, 5.0 ],
+            "ROTAT": [ 45.0, 0.0, 0.0 ],
             "SCALE": [ 10.0, 10.0, 0.01 ]
         }
     ]

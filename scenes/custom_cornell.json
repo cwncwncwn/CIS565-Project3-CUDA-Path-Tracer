@@ -3,7 +3,7 @@
         "light": {
             "TYPE": "Emitting",
             "RGB": [ 1.0, 1.0, 1.0 ],
-            "EMITTANCE": 10.0
+            "EMITTANCE": 15.0
         },
         "diffuse_white": {
             "TYPE": "Diffuse",
@@ -46,17 +46,9 @@
         "UP": [ 0.0, 1.0, 0.0 ]
     },
     "Environment": {
-        "FILENAME": "industrial_sunset_puresky_8k",
         "COLOR": [ 0.0, 0.0, 0.0 ]
     },
     "Objects": [
-        {
-            "TYPE": "cube",
-            "MATERIAL": "light",
-            "TRANS": [ 0.0, 10.0, 0.0 ],
-            "ROTAT": [ 0.0, 0.0, 0.0 ],
-            "SCALE": [ 4.0, 0.3, 4.0 ]
-        },
         {
             "TYPE": "cube",
             "MATERIAL": "diffuse_blue",
@@ -94,7 +86,7 @@
         },
         {
             "TYPE": "custom",
-            "PATH": "torii",
+            "PATH": "mifei",
             "EXTERNAL_MATERIAL": true,
             "MATERIAL": "transmissive_white",
             "TRANS": [ 0.0, 0.0, 0.0 ],

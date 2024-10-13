@@ -3,6 +3,7 @@
 *.sln
 *.vcxproj
 *.xcodeproj
+*.hdr
 build
 
 # Created by https://www.gitignore.io/api/linux,osx,sublimetext,windows,jetbrains,vim,emacs,cmake,c++,cuda,visualstudio,webstorm,eclipse,xcode
@@ -23,7 +24,7 @@ build
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*

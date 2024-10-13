@@ -198,6 +198,10 @@ __host__ __device__ float customMeshIntersectionTest(
         vertices[t_v_idx + 1].uv * baryCentric_factor.y +
         vertices[t_v_idx + 2].uv * baryCentric_factor.z;
 
+    for (int i = 0; i < 2; i++) {
+        uv[i] = uv[i] > 0 ? glm::fract(uv[i]) : 1.f - glm::fract(-uv[i]);
+    }
+
     // compute normal
     int bumpMapIdx = materials[mesh.materialid].bumpMapTextIdx;
     if (bumpMapIdx < 0) {
