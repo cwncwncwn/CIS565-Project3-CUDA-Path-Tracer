@@ -8,22 +8,15 @@ CUDA Path Tracer
 * Tested on: Windows 11, AMD Ryzen 7 5800H @ 3.20GHz 16GB, NVIDIA GeForce RTX 3070
 ## Introduction
 ### Some Final Renders
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/tearoom.png" width="100%" />
-    <figcaption>A render of a tea room</figcaption>
-  </figure>
-</div>
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/refract_reflect.png" width="100%" />
-    <figcaption>Refraction (left) and Reflection (right)</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/mesh_loading.png" width="100%" />
-    <figcaption>Diffuse material with environment mapping</figcaption>
-  </figure>
-</div>
+- | ![](img/tearoom.png) |
+  |:-----------------------------:|
+  | A render of a tea room        |
+
+
+| ![](img/refract_reflect.png) | ![](img/mesh_loading.png) |
+|:-----------------------------:|:-----------------------------:|
+| Refraction (left) and Reflection (right)           | Diffuse material with environment mapping           |
+
 
 This project is a Path Tracer written in C++ and uses CUDA for GPU support. The specific features of this path tracer are as written below:
 - **Materials**
@@ -50,115 +43,68 @@ The scene .JSON file contains several sections: ``Materials``, ``Camera``, ``Env
 Custom mesh loading is supported in this path tracer. Specifically, .OBJ files can be loaded in the scene supported by tinyOBJ. To load a custom .OBJ mesh, change the `TYPE` value under the `Objects` section in the scene file to `"custom"`, add the name of the mesh to the `PATH` variable, and place the mesh under the `/scenes/Mesh` folder. 
 
 Custom textures can also be read from the .MTL file. After making sure the texture names align with what is listed in .MTL file, place the textures in `/scenes/Mesh/Textures` folder. Currently, the path tracer supports diffuse and normal maps.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/mesh_loading_2.png" width="100%" />
-    <figcaption>Custom Mesh Loading</figcaption>
-  </figure>
-</div>
+- | ![](img/mesh_loading_2.png) |
+  |:-----------------------------:|
+  | Custom Mesh Loading        |
 
 ### Environment Loading
 If wanting to load a skybox .HDR file or a specific background color, simply add to the `Environment` section of the scene file by filling in the `FILENAME` variable. If not loading a environment map, the background color can be changed by adjusting the `COLOR` variable. If no `Environmet` section defined, the default background color will be black.
 
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/mesh_loading.png" width="100%" />
-    <figcaption>Environment Mapping</figcaption>
-  </figure>
-</div>
+- | ![](img/mesh_loading.png) |
+  |:-----------------------------:|
+  | Environment Mapping        |
 
 ### Materials
 In this path tracer, surfaces interact with light through BSDF (Bidirectional Scattering Distribution Function) materials. BSDF materials describe how light is scattered—either reflected or transmitted—when it hits a surface. The supported BSDF materials in this path tracer include:
 
 - **Diffuse**: Represents perfect diffuse reflection, where light scatters uniformly in all directions, creating a soft, matte appearance.
 - **Specular**: Models perfect mirror-like reflection, where light reflects at the same angle it hits the surface, resulting in sharp reflections.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/diffuse.png" width="100%" />
-    <figcaption>Diffuse</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/specular.png" width="100%" />
-    <figcaption>Mirror</figcaption>
-  </figure>
-</div>
+
+| ![](img/diffuse.png) | ![](img/specular.png) |
+|:-----------------------------:|:-----------------------------:|
+| Diffuse           | Mirror           |
 
 - **Transmissive**: Allows light to pass through the material to simulate glass-like surfaces with refraction and transparency.
 - **Emissive**: Emits light directly from the surface, and serves as a light source within the scene.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/refraction.png" width="100%" />
-    <figcaption>Transmissive</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/emissive.png" width="100%" />
-    <figcaption>Emissive</figcaption>
-  </figure>
-</div>
+
+| ![](img/refraction.png) | ![](img/emissive.png) |
+|:-----------------------------:|:-----------------------------:|
+| Transmissive           | Emissive           |
 
 These BSDF materials provide a foundation for rendering realistic interactions between light and surfaces in various environments, making it possible to simulate different material types and lighting effects.
 
 ### Denoise
 To enhance the visual quality of rendered images, this path tracer incorporates [Intel Open Image Denoise (OIDN)](https://github.com/RenderKit/oidn), a powerful AI-based denoiser. OIDN reduces noise in path-traced images by utilizing deep learning to predict and remove noise patterns, resulting in cleaner, more polished final images. This process significantly improves rendering efficiency, especially when using lower sample counts, allowing for faster image convergence without compromising detail and clarity.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/no_denoising.png" width="100%" />
-    <figcaption>Before Denoising</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/mesh_loading_2.png" width="100%" />
-    <figcaption>After Denoising</figcaption>
-  </figure>
-</div>
+
+| ![](img/no_denoising.png) | ![](img/mesh_loading_2.png) |
+|:-----------------------------:|:-----------------------------:|
+| >Before Denoising           | After Denoising           |
+
 
 While using the [raw "beauty" buffer](https://github.com/RenderKit/oidn#open-image-denoise-overview) to denoise the final image, the albedo and normal maps are also passed into the auxilary buffers to enhance the results.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/albedo.png" width="100%" />
-    <figcaption>Albedo</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/normal.png" width="100%" />
-    <figcaption>Normal</figcaption>
-  </figure>
-</div>
+
+| ![](img/albedo.png) | ![](img/normal.png) |
+|:-----------------------------:|:-----------------------------:|
+| Albedo           | Normal           |
 
 However, while denoising could significant improve the look of the rendered images, it causes extra runtime to perform the denoising and causes render FPS to drop. 
 
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/Denoising.png" width="100%" />
-  </figure>
-</div>
+![](img/Denoising.png)
 
 ### Anti-Aliasing
 Stochastic anti-aliasing is also utilized to smooth out jagged edges in the rendered image. By randomly jittering the ray direction within each pixel and averaging the results through Monte Carlo sampling, the path tracer achieves a natural anti-aliasing effect. This approach allows for improved image quality without additional computational cost, as anti-aliasing is inherently integrated into the path tracing process. For below images, it is obvious that the one before anti-aliasing has jagged edges.
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/no_anti_aliasing.png" width="100%" />
-    <figcaption>Before Anti-Aliasing</figcaption>
-  </figure>
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/no_denoising.png" width="100%" />
-    <figcaption>After Anti-Aliasing</figcaption>
-  </figure>
-</div>
+
+| ![](img/no_anti_aliasing.png) | ![](img/no_denoising.png) |
+|:-----------------------------:|:-----------------------------:|
+| Before Anti-Aliasing           | After Anti-Aliasing           |
 
 ## Performance Analysis
 ### Stream Compaction
 In the logic of the path tracer, when a ray hits an object with emissive material or nothing or reaches a depth count, it would be terminated. In this way, as some rays are terminated while the others are still working, there are a lot of spare threads costing extra runtime. Thus, stream compaction is performed at each iteration to reduce such lost. Below is a chart comparing whether stream compaction is performed:
 
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/stream_compaction.png" width="100%" />
-  </figure>
-</div>
+![](img/stream_compaction.png)
 
 ### Material Sort
 After the rays hit the object for the first time, they are then scattered to different directions and hit object with different materials. As this divergence would drag the performance when the scene contains large number of materials, we sort the path segments and intersections each iteration based on their material. The chart below shows the comparison between whether material sorting is performed. Specifically, the "simple scene" uses "cornell.json", which simply uses virtual geometries and the "heavy scene" uses the [tea room scene](#Some-Final-Renders) (87681 triangles).
 
-<div style="display: flex; justify-content: space-around;">
-  <figure style="text-align: center; margin: 10px;">
-    <img src="img/MS.png" width="100%" />
-  </figure>
-</div>
+![](img/MS.png)
